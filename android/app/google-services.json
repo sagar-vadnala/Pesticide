@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "281216651346",
+    "project_id": "indian-pest-care-services",
+    "storage_bucket": "indian-pest-care-services.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:281216651346:android:a8e4dbec08b574b1db0f8b",
+        "android_client_info": {
+          "package_name": "com.sagar.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCpZJw4yzyzlOxOrwhx674XuoLuAL88Fck"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

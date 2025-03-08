@@ -10,8 +10,6 @@ import '../../model/picked_file_response.dart';
 import '../../utils/dev.log.dart';
 import '../../widgets/images/images.dart';
 
-import '../forms/details_form.dart';
-
 class DisplayImagePickerWidget extends ConsumerStatefulWidget {
   const DisplayImagePickerWidget({
     super.key,
