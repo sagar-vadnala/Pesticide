@@ -1,16 +1,14 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:quiver/strings.dart';
 
 import '../../screens/image_preview/image_preview.dart';
 import '../../model/picked_file_response.dart';
 import '../../utils/dev.log.dart';
 import '../../screens/images/images.dart';
 
-class DisplayImagePickerWidget extends ConsumerStatefulWidget {
+class DisplayImagePickerWidget extends StatefulWidget {
   const DisplayImagePickerWidget({
     super.key,
     this.file,
@@ -25,10 +23,10 @@ class DisplayImagePickerWidget extends ConsumerStatefulWidget {
   final void Function(bool)? shouldRemove;
 
   @override
-  ConsumerState<DisplayImagePickerWidget> createState() => DisplayImagePickerWidgetState();
+  State<DisplayImagePickerWidget> createState() => DisplayImagePickerWidgetState();
 }
 
-class DisplayImagePickerWidgetState extends ConsumerState<DisplayImagePickerWidget> {
+class DisplayImagePickerWidgetState extends State<DisplayImagePickerWidget> {
   File? file;
   String? displayImageUrl;
   bool pickerLoading = false;
@@ -72,11 +70,11 @@ class DisplayImagePickerWidgetState extends ConsumerState<DisplayImagePickerWidg
                 ),
         );
 
-        if (isNotBlank(displayImageUrl)) {
+        if (displayImageUrl != null && displayImageUrl!.isNotEmpty) {
           image = ExtendedCachedImage(imageUrl: displayImageUrl);
         }
 
-        if (file != null && isNotBlank(file?.path)) {
+        if (file != null && file?.path != null && file!.path.isNotEmpty) {
           image = Image.file(file!, fit: BoxFit.cover);
         }
 
@@ -114,11 +112,13 @@ class DisplayImagePickerWidgetState extends ConsumerState<DisplayImagePickerWidg
                           fit: StackFit.expand,
                           children: [
                             SizedBox(child: image),
-                            if ((file != null && isNotBlank(file?.path)) ||
-                                isNotBlank(displayImageUrl))
+                            if ((file != null && file?.path != null && file!.path.isNotEmpty) ||
+                                (displayImageUrl != null && displayImageUrl!.isNotEmpty))
                               const SizedBox(height: 10),
-                            if ((file != null && isNotBlank(file?.path)) ||
-                                isNotBlank(displayImageUrl) && widget.onFilePicked != null)
+                            if ((file != null && file?.path != null && file!.path.isNotEmpty) ||
+                                (displayImageUrl != null &&
+                                    displayImageUrl!.isNotEmpty &&
+                                    widget.onFilePicked != null))
                               Positioned(
                                 top: 5,
                                 right: 5,
@@ -155,23 +155,7 @@ class DisplayImagePickerWidgetState extends ConsumerState<DisplayImagePickerWidg
                   ),
                 ),
               ),
-              if (file != null || displayImageUrl != null)
-                // Padding(
-                //   padding: const EdgeInsets.only(top: 16.0),
-                //   child: ElevatedButton(
-                //     onPressed: () {
-                //       Navigator.push(
-                //         context,
-                //         MaterialPageRoute(
-                //           builder: (context) =>
-                //               FormScreen(imageFile: file, imageUrl: displayImageUrl),
-                //         ),
-                //       );
-                //     },
-                //     child: const Text('Create Form'),
-                //   ),
-                // ),
-                const SizedBox(),
+              const SizedBox(),
             ],
           ),
         );
@@ -185,6 +169,9 @@ class DisplayImagePickerWidgetState extends ConsumerState<DisplayImagePickerWidg
         throw Exception('onFilePicker function must be provided');
       }
       final picker = ImagePicker();
+      setState(() {
+        pickerLoading = true;
+      });
       final pickedFile = await picker.pickImage(
         source: source,
         preferredCameraDevice: CameraDevice.rear,

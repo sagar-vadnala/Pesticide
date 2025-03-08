@@ -1,7 +1,5 @@
 import 'dart:io';
-
 import 'package:flutter/material.dart';
-
 import '../../screens/image_preview/image_preview.dart';
 import '../../screens/images/images.dart';
 
@@ -18,11 +16,10 @@ class FormScreen extends StatefulWidget {
   });
 
   @override
-  // ignore: library_private_types_in_public_api
-  _FormScreenState createState() => _FormScreenState();
+  FormScreenState createState() => FormScreenState();
 }
 
-class _FormScreenState extends State<FormScreen> {
+class FormScreenState extends State<FormScreen> {
   final TextEditingController field1Controller = TextEditingController();
   final TextEditingController field2Controller = TextEditingController();
   final TextEditingController field3Controller = TextEditingController();
@@ -167,6 +164,7 @@ class _FormScreenState extends State<FormScreen> {
                 },
                 child: Text(widget.initialData == null ? 'Submit Form' : 'Update Form'),
               ),
+              const SizedBox(height: 30),
             ],
           ),
         ),

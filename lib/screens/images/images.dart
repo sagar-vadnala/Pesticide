@@ -1,6 +1,5 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:quiver/strings.dart';
 import 'package:shimmer/shimmer.dart';
 
 import '../../utils/dev.log.dart';
@@ -26,7 +25,7 @@ class ExtendedCachedImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (isBlank(imageUrl)) {
+    if (imageUrl == null || imageUrl!.isEmpty) {
       return LimitedBox(
         // maxHeight: 100,
         child: ClipRRect(

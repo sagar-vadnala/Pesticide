@@ -1,7 +1,5 @@
 import 'dart:io';
-
 import 'package:flutter/material.dart';
-
 import '../images/images.dart';
 
 class ImagePreviewScreen extends StatelessWidget {
