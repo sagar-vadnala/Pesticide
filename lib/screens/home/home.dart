@@ -168,7 +168,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         pw.Padding(
                           padding: const pw.EdgeInsets.symmetric(vertical: 4.0, horizontal: 2),
                           child: pw.Text(
-                            'Action plan by SSHH team',
+                            'Action plan by Qentelli team',
                           ),
                         ),
                       ],
@@ -176,21 +176,15 @@ class _HomeScreenState extends State<HomeScreen> {
                     for (int i = start; i < end; i++)
                       pw.TableRow(
                         children: [
-                          pw.Padding(
-                            padding: const pw.EdgeInsets.all(8.0),
-                            child: pw.Text('${i + 1}', style: centeredTextStyle),
-                          ),
-                          pw.Padding(
-                            padding: const pw.EdgeInsets.all(8.0),
-                            child: formDataList[i]['image'] != null
-                                ? pw.Image(
-                                    pw.MemoryImage(formDataList[i]['image']!.bytes),
-                                    height: 100, // Increased image height
-                                    width: 100, // Increased image width
-                                    fit: pw.BoxFit.cover, // Ensures image takes up full cell space
-                                  )
-                                : pw.Text('No Image', style: centeredTextStyle),
-                          ),
+                          pw.Text('${i + 1}', style: centeredTextStyle),
+                          formDataList[i]['image'] != null
+                              ? pw.Image(
+                                  pw.MemoryImage(formDataList[i]['image']!.bytes),
+                                  height: 100, // Increased image height
+                                  width: 100, // Increased image width
+                                  fit: pw.BoxFit.cover, // Ensures image takes up full cell space
+                                )
+                              : pw.Text('No Image', style: centeredTextStyle),
                           pw.Padding(
                             padding: const pw.EdgeInsets.symmetric(vertical: 4.0, horizontal: 2),
                             child: pw.Text(formDataList[i]['formData']['Name of the area'] ?? '',
@@ -215,7 +209,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           pw.Padding(
                             padding: const pw.EdgeInsets.symmetric(vertical: 4.0, horizontal: 2),
                             child: pw.Text(
-                                formDataList[i]['formData']['Action plan by SSHH team'] ?? '',
+                                formDataList[i]['formData']['Action plan by Qentelli team'] ?? '',
                                 style: centeredTextStyle),
                           ),
                         ],
@@ -412,7 +406,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     label: Text('Actions plan by IPCS',
                         style: TextStyle(fontWeight: FontWeight.bold))),
                 DataColumn(
-                    label: Text('Action plan by SSHH team',
+                    label: Text('Action plan by Qentelli team',
                         style: TextStyle(fontWeight: FontWeight.bold))),
                 DataColumn(label: Text('Actions', style: TextStyle(fontWeight: FontWeight.bold))),
               ],
@@ -434,7 +428,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     DataCell(Text(formData['Source Identified'] ?? '')),
                     DataCell(Text(formData['Type of infestation'] ?? '')),
                     DataCell(Text(formData['Actions plan by IPCS'] ?? '')),
-                    DataCell(Text(formData['Action plan by SSHH team'] ?? '')),
+                    DataCell(Text(formData['Action plan by Qentelli team'] ?? '')),
                     DataCell(
                       Row(
                         children: [
@@ -504,35 +498,3 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 }
-
- // return pw.TableRow(
-                    //   children: [
-                    //     pw.Padding(
-                    //       padding: const pw.EdgeInsets.all(8.0),
-                    //       child: pw.Text('${index + 1}', style: const pw.TextStyle(fontSize: 12)),
-                    //     ),
-                    //     pw.Padding(
-                    //       padding: const pw.EdgeInsets.all(8.0),
-                    //       child: imageWidget,
-                    //     ),
-                    //     pw.SizedBox(
-                    //       width: 100,
-                    //       child: pw.Text(formData['Name of the area'] ?? '',
-                    //           style: const pw.TextStyle(fontSize: 12)),
-                    //     ),
-                    //     pw.SizedBox(
-                    //       width: 100,
-                    //       child: pw.Text(formData['Source Identified'] ?? '',
-                    //           style: const pw.TextStyle(fontSize: 12)),
-                    //     ),
-                    //     pw.SizedBox(
-                    //       width: 100,
-                    //       child: pw.Text(formData['Actions plan by IPCS'] ?? '',
-                    //           style: const pw.TextStyle(fontSize: 12)),
-                    //     ),
-                    //     pw.Expanded(
-                    //       child: pw.Text(formData['Action plan by SSHH team'] ?? '',
-                    //           style: const pw.TextStyle(fontSize: 12)),
-                    //     ),
-                    //   ],
-                    // );
