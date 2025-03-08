@@ -2,8 +2,8 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 
-import '../../images/image_preview.dart';
-import '../../widgets/images/images.dart';
+import '../../screens/image_preview/image_preview.dart';
+import '../../screens/images/images.dart';
 
 class FormScreen extends StatefulWidget {
   final File? imageFile;

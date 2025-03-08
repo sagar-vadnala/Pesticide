@@ -5,10 +5,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:quiver/strings.dart';
 
-import '../../images/image_preview.dart';
+import '../../screens/image_preview/image_preview.dart';
 import '../../model/picked_file_response.dart';
 import '../../utils/dev.log.dart';
-import '../../widgets/images/images.dart';
+import '../../screens/images/images.dart';
 
 class DisplayImagePickerWidget extends ConsumerStatefulWidget {
   const DisplayImagePickerWidget({
