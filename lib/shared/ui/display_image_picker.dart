@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../screens/image_preview/image_preview.dart';
@@ -23,7 +24,8 @@ class DisplayImagePickerWidget extends StatefulWidget {
   final void Function(bool)? shouldRemove;
 
   @override
-  State<DisplayImagePickerWidget> createState() => DisplayImagePickerWidgetState();
+  State<DisplayImagePickerWidget> createState() =>
+      DisplayImagePickerWidgetState();
 }
 
 class DisplayImagePickerWidgetState extends State<DisplayImagePickerWidget> {
@@ -42,8 +44,10 @@ class DisplayImagePickerWidgetState extends State<DisplayImagePickerWidget> {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
-        final double maxWidth = isLandscape ? constraints.maxHeight * 16 / 9 : constraints.maxWidth;
+        final isLandscape =
+            MediaQuery.of(context).orientation == Orientation.landscape;
+        final double maxWidth =
+            isLandscape ? constraints.maxHeight * 16 / 9 : constraints.maxWidth;
         final double maxHeight =
             isLandscape ? constraints.maxHeight : constraints.maxWidth * 9 / 16;
 
@@ -112,10 +116,15 @@ class DisplayImagePickerWidgetState extends State<DisplayImagePickerWidget> {
                           fit: StackFit.expand,
                           children: [
                             SizedBox(child: image),
-                            if ((file != null && file?.path != null && file!.path.isNotEmpty) ||
-                                (displayImageUrl != null && displayImageUrl!.isNotEmpty))
+                            if ((file != null &&
+                                    file?.path != null &&
+                                    file!.path.isNotEmpty) ||
+                                (displayImageUrl != null &&
+                                    displayImageUrl!.isNotEmpty))
                               const SizedBox(height: 10),
-                            if ((file != null && file?.path != null && file!.path.isNotEmpty) ||
+                            if ((file != null &&
+                                    file?.path != null &&
+                                    file!.path.isNotEmpty) ||
                                 (displayImageUrl != null &&
                                     displayImageUrl!.isNotEmpty &&
                                     widget.onFilePicked != null))
@@ -125,13 +134,15 @@ class DisplayImagePickerWidgetState extends State<DisplayImagePickerWidget> {
                                 child: Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    if (widget.shouldRemove != null) const Text(""),
+                                    if (widget.shouldRemove != null)
+                                      const Text(""),
                                     IconButton(
                                       style: TextButton.styleFrom(
                                         foregroundColor: Colors.red,
                                         backgroundColor: Colors.black,
                                         shape: const RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.all(Radius.circular(5)),
+                                          borderRadius: BorderRadius.all(
+                                              Radius.circular(5)),
                                         ),
                                       ),
                                       onPressed: () {
@@ -141,7 +152,8 @@ class DisplayImagePickerWidgetState extends State<DisplayImagePickerWidget> {
                                         });
                                         widget.shouldRemove!(true);
                                         widget.onFilePicked!(null);
-                                        Navigator.pop(context); // Pop back after deletion
+                                        Navigator.pop(
+                                            context); // Pop back after deletion
                                       },
                                       icon: const Icon(Icons.delete, size: 25),
                                     ),
@@ -168,14 +180,22 @@ class DisplayImagePickerWidgetState extends State<DisplayImagePickerWidget> {
       if (widget.onFilePicked == null) {
         throw Exception('onFilePicker function must be provided');
       }
+
       final picker = ImagePicker();
       setState(() {
         pickerLoading = true;
       });
+
+      // Note: Camera availability will be handled by the platform exception
+
       final pickedFile = await picker.pickImage(
         source: source,
         preferredCameraDevice: CameraDevice.rear,
+        imageQuality: 85, // Reduce image quality to avoid memory issues
+        maxWidth: 1920, // Limit max width
+        maxHeight: 1080, // Limit max height
       );
+
       if (pickedFile != null) {
         setState(() {
           file = File(pickedFile.path);
@@ -188,6 +208,41 @@ class DisplayImagePickerWidgetState extends State<DisplayImagePickerWidget> {
           ),
         );
       }
+    } on PlatformException catch (e) {
+      Dev.error('Platform error selecting file',
+          error: e, stackTrace: StackTrace.current);
+      if (!mounted) return;
+
+      String errorMessage =
+          'An error occurred while accessing the ${source == ImageSource.camera ? 'camera' : 'gallery'}';
+
+      if (e.code == 'camera_access_denied' || e.code == 'photo_access_denied') {
+        _showPermissionSettingsDialog(
+            source == ImageSource.camera ? 'Camera' : 'Photo Library');
+        return;
+      } else if (e.code == 'camera_not_available') {
+        errorMessage = 'Camera is not available on this device.';
+      } else if (e.code == 'photo_library_not_available') {
+        errorMessage = 'Photo library is not available on this device.';
+      }
+
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text('Permission Required'),
+            content: Text(errorMessage),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                child: const Text('OK'),
+              ),
+            ],
+          );
+        },
+      );
     } catch (e, s) {
       Dev.error('Error selecting file', error: e, stackTrace: s);
       if (!mounted) return;
@@ -196,7 +251,7 @@ class DisplayImagePickerWidgetState extends State<DisplayImagePickerWidget> {
         builder: (BuildContext context) {
           return AlertDialog(
             title: const Text('Error'),
-            content: Text(e.toString()),
+            content: Text('An unexpected error occurred: ${e.toString()}'),
             actions: [
               TextButton(
                 onPressed: () {
@@ -217,5 +272,37 @@ class DisplayImagePickerWidgetState extends State<DisplayImagePickerWidget> {
 
   static String createMimeType(String path) {
     return 'image/${path.split(".").last}';
+  }
+
+  /// Shows a dialog to guide users to enable permissions in settings
+  void _showPermissionSettingsDialog(String permissionType) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Permission Required'),
+          content: Text(
+            '$permissionType permission is required to use this feature. '
+            'Please enable it in your device settings.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                // Note: In a real app, you might want to open settings
+                // This would require additional packages like url_launcher
+              },
+              child: const Text('Open Settings'),
+            ),
+          ],
+        );
+      },
+    );
   }
 }
