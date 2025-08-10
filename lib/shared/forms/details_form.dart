@@ -2,17 +2,20 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import '../../screens/image_preview/image_preview.dart';
 import '../../screens/images/images.dart';
+import '../../model/form_field_config.dart';
 
 class FormScreen extends StatefulWidget {
   final File? imageFile;
   final String? imageUrl;
   final Map<String, String>? initialData;
+  final List<FormFieldConfig>? formFields;
 
   const FormScreen({
     super.key,
     this.imageFile,
     this.imageUrl,
     this.initialData,
+    this.formFields,
   });
 
   @override
@@ -20,33 +23,51 @@ class FormScreen extends StatefulWidget {
 }
 
 class FormScreenState extends State<FormScreen> {
-  final TextEditingController field1Controller = TextEditingController();
-  final TextEditingController field2Controller = TextEditingController();
-  final TextEditingController field3Controller = TextEditingController();
-  final TextEditingController field4Controller = TextEditingController();
-  final TextEditingController field5Controller = TextEditingController();
-
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  List<TextEditingController> controllers = [];
+  List<FormFieldConfig> formFields = [];
 
   @override
   void initState() {
     super.initState();
+    _initializeFormFields();
+  }
+
+  void _initializeFormFields() {
+    // Use provided form fields or default ones
+    if (widget.formFields != null && widget.formFields!.isNotEmpty) {
+      formFields = widget.formFields!;
+    } else {
+      // Default form fields if none provided
+      formFields = [
+        FormFieldConfig(id: 'field_1', label: 'Name of the area'),
+        FormFieldConfig(id: 'field_2', label: 'Source Identified'),
+        FormFieldConfig(id: 'field_3', label: 'Type of infestation'),
+        FormFieldConfig(id: 'field_4', label: 'Actions plan by IPCS'),
+        FormFieldConfig(id: 'field_5', label: 'Action plan by Qentelli team'),
+      ];
+    }
+
+    // Initialize controllers
+    controllers = List.generate(
+      formFields.length,
+      (index) => TextEditingController(),
+    );
+
+    // Load initial data if editing
     if (widget.initialData != null) {
-      field1Controller.text = widget.initialData!['Field 1'] ?? '';
-      field2Controller.text = widget.initialData!['Field 2'] ?? '';
-      field3Controller.text = widget.initialData!['Field 3'] ?? '';
-      field4Controller.text = widget.initialData!['Field 4'] ?? '';
-      field5Controller.text = widget.initialData!['Field 5'] ?? '';
+      for (int i = 0; i < formFields.length && i < controllers.length; i++) {
+        final field = formFields[i];
+        controllers[i].text = widget.initialData![field.label] ?? '';
+      }
     }
   }
 
   @override
   void dispose() {
-    field1Controller.dispose();
-    field2Controller.dispose();
-    field3Controller.dispose();
-    field4Controller.dispose();
-    field5Controller.dispose();
+    for (var controller in controllers) {
+      controller.dispose();
+    }
     super.dispose();
   }
 
@@ -99,50 +120,22 @@ class FormScreenState extends State<FormScreen> {
                 padding: const EdgeInsets.all(16.0),
                 child: Column(
                   children: [
-                    TextFormField(
-                      controller: field1Controller,
-                      decoration: const InputDecoration(
-                        labelText: 'Name of the area',
-                        border: OutlineInputBorder(),
-                      ),
-                      validator: _validateMinLength,
-                    ),
-                    const SizedBox(height: 16),
-                    TextFormField(
-                      controller: field2Controller,
-                      decoration: const InputDecoration(
-                        labelText: 'Source Identified',
-                        border: OutlineInputBorder(),
-                      ),
-                      validator: _validateMinLength,
-                    ),
-                    const SizedBox(height: 16),
-                    TextFormField(
-                      controller: field3Controller,
-                      decoration: const InputDecoration(
-                        labelText: 'Type of infestation',
-                        border: OutlineInputBorder(),
-                      ),
-                      validator: _validateMinLength,
-                    ),
-                    const SizedBox(height: 16),
-                    TextFormField(
-                      controller: field4Controller,
-                      decoration: const InputDecoration(
-                        labelText: 'Actions plan by IPCS',
-                        border: OutlineInputBorder(),
-                      ),
-                      validator: _validateMinLength,
-                    ),
-                    const SizedBox(height: 16),
-                    TextFormField(
-                      controller: field5Controller,
-                      decoration: const InputDecoration(
-                        labelText: 'Action plan by Qentelli team',
-                        border: OutlineInputBorder(),
-                      ),
-                      validator: _validateMinLength,
-                    ),
+                    ...formFields.asMap().entries.map((entry) {
+                      final index = entry.key;
+                      final field = entry.value;
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 16.0),
+                        child: TextFormField(
+                          controller: controllers[index],
+                          decoration: InputDecoration(
+                            labelText: field.label,
+                            border: const OutlineInputBorder(),
+                          ),
+                          validator:
+                              field.isRequired ? _validateMinLength : null,
+                        ),
+                      );
+                    }).toList(),
                     const SizedBox(height: 30),
                   ],
                 ),
@@ -151,18 +144,19 @@ class FormScreenState extends State<FormScreen> {
                 onPressed: () {
                   if (_formKey.currentState!.validate()) {
                     // If form is valid, proceed
-                    final formData = {
-                      'Name of the area': field1Controller.text,
-                      'Source Identified': field2Controller.text,
-                      'Type of infestation': field3Controller.text,
-                      'Actions plan by IPCS': field4Controller.text,
-                      'Action plan by Qentelli team': field5Controller.text,
-                    };
+                    final formData = <String, String>{};
+                    for (int i = 0;
+                        i < formFields.length && i < controllers.length;
+                        i++) {
+                      formData[formFields[i].label] = controllers[i].text;
+                    }
 
-                    Navigator.pop(context, formData); // Return form data to HomeScreen
+                    Navigator.pop(
+                        context, formData); // Return form data to HomeScreen
                   }
                 },
-                child: Text(widget.initialData == null ? 'Submit Form' : 'Update Form'),
+                child: Text(
+                    widget.initialData == null ? 'Submit Form' : 'Update Form'),
               ),
               const SizedBox(height: 30),
             ],
