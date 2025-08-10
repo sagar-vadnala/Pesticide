@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:typed_data';
 import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
@@ -30,11 +29,25 @@ class PdfService {
     required AppConfig appConfig,
     required Function(double) onProgressUpdate,
   }) async {
+    // Validate input data to prevent NaN issues
+    if (formDataList.isEmpty) {
+      throw Exception('No data to generate PDF');
+    }
+
+    if (formFields.isEmpty) {
+      throw Exception('No form fields configured');
+    }
+
     await _loadCustomFont();
 
     final pdf = pw.Document();
     const rowsPerPage = 5;
     final totalPages = (formDataList.length / rowsPerPage).ceil();
+
+    // Validate totalPages to avoid division by zero
+    if (totalPages <= 0) {
+      throw Exception('Invalid page count');
+    }
 
     for (int pageIndex = 0; pageIndex < totalPages; pageIndex++) {
       final start = pageIndex * rowsPerPage;
@@ -52,10 +65,12 @@ class PdfService {
 
           if (pickedFile.file.existsSync()) {
             try {
-              final bytes = await pickedFile.file.readAsBytes();
+              final originalBytes = await pickedFile.file.readAsBytes();
+
+              // Use original bytes without any processing to avoid NaN issues
               item['image'] = PickedFileResponse(
                 file: pickedFile.file,
-                bytes: bytes,
+                bytes: originalBytes,
                 mimeType: pickedFile.mimeType,
               );
             } catch (e) {
@@ -65,12 +80,19 @@ class PdfService {
         }
 
         pageItems.add(item);
-        onProgressUpdate((i + 1) / formDataList.length);
+
+        // Safely update progress to avoid NaN
+        final progress =
+            formDataList.length > 0 ? (i + 1) / formDataList.length : 0.0;
+        if (!progress.isNaN && progress.isFinite) {
+          onProgressUpdate(progress.clamp(0.0, 1.0));
+        }
       }
 
       pdf.addPage(
         pw.Page(
           pageFormat: PdfPageFormat.a4,
+          margin: const pw.EdgeInsets.all(20),
           build: (pw.Context context) {
             return pw.Column(
               children: [
@@ -92,10 +114,20 @@ class PdfService {
                 ),
                 pw.SizedBox(height: 20),
                 pw.Table(
-                  border: pw.TableBorder.all(),
+                  border: pw.TableBorder.all(
+                    width: 1.0,
+                    color: PdfColors.black,
+                  ),
                   columnWidths: _buildColumnWidths(formFields),
+                  defaultVerticalAlignment:
+                      pw.TableCellVerticalAlignment.middle,
                   children: [
-                    pw.TableRow(children: _buildHeaderRow(formFields)),
+                    pw.TableRow(
+                      decoration: const pw.BoxDecoration(
+                        color: PdfColors.grey200,
+                      ),
+                      children: _buildHeaderRow(formFields),
+                    ),
                     for (int i = 0; i < pageItems.length; i++)
                       _buildTableRow(pageItems[i], formFields, start + i + 1),
                   ],
@@ -119,14 +151,15 @@ class PdfService {
 
   static Map<int, pw.TableColumnWidth> _buildColumnWidths(
       List<FormFieldConfig> formFields) {
-    final columnWidths = <int, pw.TableColumnWidth>{
-      0: const pw.FixedColumnWidth(35), // Sr. No
-      1: const pw.FixedColumnWidth(100), // Image
-    };
+    final columnWidths = <int, pw.TableColumnWidth>{};
 
-    // Add dynamic columns for form fields
+    // Simple fixed widths to avoid any calculation issues
+    columnWidths[0] = const pw.FixedColumnWidth(40); // Sr. No
+    columnWidths[1] = const pw.FixedColumnWidth(120); // Image
+
+    // All form field columns get equal flex width
     for (int i = 0; i < formFields.length; i++) {
-      columnWidths[2 + i] = const pw.FlexColumnWidth();
+      columnWidths[2 + i] = const pw.FlexColumnWidth(1.0);
     }
 
     return columnWidths;
@@ -134,22 +167,46 @@ class PdfService {
 
   static List<pw.Widget> _buildHeaderRow(List<FormFieldConfig> formFields) {
     final headers = <pw.Widget>[
-      pw.Padding(
-        padding: const pw.EdgeInsets.symmetric(vertical: 4.0, horizontal: 2),
-        child: pw.Text('Sr. No'),
+      pw.Container(
+        padding: const pw.EdgeInsets.all(4.0),
+        child: pw.Text(
+          'SR.NO',
+          style: pw.TextStyle(
+            fontSize: 10,
+            fontWeight: pw.FontWeight.bold,
+            font: _customFont,
+          ),
+          textAlign: pw.TextAlign.center,
+        ),
       ),
-      pw.Padding(
-        padding: const pw.EdgeInsets.symmetric(vertical: 4.0, horizontal: 2),
-        child: pw.Text('Display Image'),
+      pw.Container(
+        padding: const pw.EdgeInsets.all(4.0),
+        child: pw.Text(
+          'PICTURE',
+          style: pw.TextStyle(
+            fontSize: 10,
+            fontWeight: pw.FontWeight.bold,
+            font: _customFont,
+          ),
+          textAlign: pw.TextAlign.center,
+        ),
       ),
     ];
 
     // Add dynamic headers for form fields
     for (final field in formFields) {
       headers.add(
-        pw.Padding(
-          padding: const pw.EdgeInsets.symmetric(vertical: 4.0, horizontal: 2),
-          child: pw.Text(field.label),
+        pw.Container(
+          padding: const pw.EdgeInsets.all(4.0),
+          child: pw.Text(
+            field.label.toUpperCase(),
+            style: pw.TextStyle(
+              fontSize: 10,
+              fontWeight: pw.FontWeight.bold,
+              font: _customFont,
+            ),
+            textAlign: pw.TextAlign.center,
+          ),
         ),
       );
     }
@@ -163,16 +220,45 @@ class PdfService {
     int index,
   ) {
     final cells = <pw.Widget>[
-      pw.Text('$index'),
+      pw.Container(
+        padding: const pw.EdgeInsets.all(8.0),
+        child: pw.Text(
+          '$index',
+          style: pw.TextStyle(
+            fontSize: 10,
+            font: _customFont,
+          ),
+          textAlign: pw.TextAlign.center,
+        ),
+      ),
       _buildImageCell(item['image']),
     ];
 
     // Add dynamic cells for form fields
     for (final field in formFields) {
+      // Safely get text content and handle null/empty cases
+      String cellContent = '';
+      try {
+        final formData = item['formData'];
+        if (formData != null && formData[field.label] != null) {
+          cellContent = formData[field.label].toString();
+        }
+      } catch (e) {
+        print('Error getting form data for field ${field.label}: $e');
+        cellContent = '';
+      }
+
       cells.add(
-        pw.Padding(
-          padding: const pw.EdgeInsets.symmetric(vertical: 4.0, horizontal: 2),
-          child: pw.Text(item['formData'][field.label] ?? ''),
+        pw.Container(
+          padding: const pw.EdgeInsets.all(8.0),
+          child: pw.Text(
+            cellContent,
+            style: pw.TextStyle(
+              fontSize: 10,
+              font: _customFont,
+            ),
+            textAlign: pw.TextAlign.left,
+          ),
         ),
       );
     }
@@ -181,26 +267,58 @@ class PdfService {
   }
 
   static pw.Widget _buildImageCell(PickedFileResponse? image) {
+    const double cellHeight = 80.0;
+
     if (image != null && image.bytes.isNotEmpty) {
       try {
+        // Validate image bytes before creating image
+        if (image.bytes.length < 10) {
+          throw Exception('Image data too small');
+        }
+
+        // Use fixed minimal padding to avoid any calculation issues
         return pw.Container(
-          height: 100,
-          width: 100,
+          height: cellHeight,
+          padding: const pw.EdgeInsets.all(2.0),
           child: pw.Center(
             child: pw.Image(
               pw.MemoryImage(image.bytes),
-              height: 100,
-              width: 100,
-              fit: pw.BoxFit.cover,
+              fit: pw.BoxFit.contain,
             ),
           ),
         );
       } catch (e) {
         print('Error creating PDF image: $e');
-        return pw.Text('Image Error');
+        return pw.Container(
+          height: cellHeight,
+          padding: const pw.EdgeInsets.all(8.0),
+          child: pw.Center(
+            child: pw.Text(
+              'Image Error',
+              style: pw.TextStyle(
+                fontSize: 8,
+                font: _customFont,
+              ),
+              textAlign: pw.TextAlign.center,
+            ),
+          ),
+        );
       }
     } else {
-      return pw.Text('No Image');
+      return pw.Container(
+        height: cellHeight,
+        padding: const pw.EdgeInsets.all(8.0),
+        child: pw.Center(
+          child: pw.Text(
+            'No Image',
+            style: pw.TextStyle(
+              fontSize: 8,
+              font: _customFont,
+            ),
+            textAlign: pw.TextAlign.center,
+          ),
+        ),
+      );
     }
   }
 }
