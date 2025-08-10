@@ -37,7 +37,8 @@ class _FormConfigScreenState extends State<FormConfigScreen> {
     if (savedFields != null) {
       setState(() {
         formFields = savedFields
-            .map((field) => FormFieldConfig.fromJson(field))
+            .map((field) =>
+                FormFieldConfig.fromJson(Map<String, dynamic>.from(field)))
             .toList();
       });
     }
