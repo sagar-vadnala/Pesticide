@@ -16,6 +16,7 @@ class _FormConfigScreenState extends State<FormConfigScreen> {
   late Box configBox;
   late TextEditingController titleController;
   late TextEditingController subtitleController;
+  int _nextFieldId = 1; // Track the next unique ID
   AppConfig appConfig = AppConfig(
     title: 'Report Title',
     subtitle: 'Report Subtitle',
@@ -40,6 +41,13 @@ class _FormConfigScreenState extends State<FormConfigScreen> {
             .map((field) =>
                 FormFieldConfig.fromJson(Map<String, dynamic>.from(field)))
             .toList();
+        // Update _nextFieldId to be higher than any existing field
+        if (formFields.isNotEmpty) {
+          _nextFieldId = formFields
+                  .map((field) => int.tryParse(field.id.split('_').last) ?? 0)
+                  .reduce((a, b) => a > b ? a : b) +
+              1;
+        }
       });
     }
 
@@ -73,25 +81,26 @@ class _FormConfigScreenState extends State<FormConfigScreen> {
   void _addField() {
     setState(() {
       formFields.add(FormFieldConfig(
-        id: 'field_${formFields.length + 1}',
-        label: 'Field ${formFields.length + 1}',
+        id: 'field_$_nextFieldId',
+        label: 'Field $_nextFieldId',
       ));
+      _nextFieldId++;
     });
   }
 
-  void _removeField(int index) {
+  void _removeField(String fieldId) {
     setState(() {
-      formFields.removeAt(index);
-      // Update IDs to maintain consistency
-      for (int i = 0; i < formFields.length; i++) {
-        formFields[i] = formFields[i].copyWith(id: 'field_${i + 1}');
+      formFields.removeWhere((field) => field.id == fieldId);
+      // No need to renumber IDs - keep them unique
+    });
+  }
+
+  void _updateField(String fieldId, FormFieldConfig updatedField) {
+    setState(() {
+      final index = formFields.indexWhere((field) => field.id == fieldId);
+      if (index != -1) {
+        formFields[index] = updatedField;
       }
-    });
-  }
-
-  void _updateField(int index, FormFieldConfig updatedField) {
-    setState(() {
-      formFields[index] = updatedField;
     });
   }
 
@@ -221,11 +230,15 @@ class _FormConfigScreenState extends State<FormConfigScreen> {
                     : ListView.builder(
                         itemCount: formFields.length,
                         itemBuilder: (context, index) {
+                          final field = formFields[index];
                           return FormFieldCard(
-                            field: formFields[index],
+                            key: ValueKey(field.id),
+                            field: field,
+                            displayIndex:
+                                index + 1, // Show sequential numbers to user
                             onUpdate: (updatedField) =>
-                                _updateField(index, updatedField),
-                            onDelete: () => _removeField(index),
+                                _updateField(field.id, updatedField),
+                            onDelete: () => _removeField(field.id),
                           );
                         },
                       ),
@@ -273,12 +286,14 @@ class _FormConfigScreenState extends State<FormConfigScreen> {
 
 class FormFieldCard extends StatefulWidget {
   final FormFieldConfig field;
+  final int displayIndex;
   final Function(FormFieldConfig) onUpdate;
   final VoidCallback onDelete;
 
   const FormFieldCard({
     super.key,
     required this.field,
+    required this.displayIndex,
     required this.onUpdate,
     required this.onDelete,
   });
@@ -329,7 +344,7 @@ class _FormFieldCardState extends State<FormFieldCard> {
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  'Field ${widget.field.id.split('_').last}',
+                  'Field ${widget.displayIndex}',
                   style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
