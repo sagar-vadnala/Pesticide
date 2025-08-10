@@ -111,6 +111,11 @@ class FormDataTable extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // For large datasets, show count and use pagination
+    if (formDataList.length > 50) {
+      return _buildPaginatedTable(context);
+    }
+
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: DataTable(
@@ -149,6 +154,35 @@ class FormDataTable extends StatelessWidget {
           color: Colors.grey[400]!,
           width: 1.0,
         ),
+      ),
+    );
+  }
+
+  Widget _buildPaginatedTable(BuildContext context) {
+    return PaginatedDataTable(
+      header: Text('Entries (${formDataList.length} total)'),
+      rowsPerPage: 20,
+      showFirstLastButtons: true,
+      columns: [
+        const DataColumn(
+            label:
+                Text('Sr. no', style: TextStyle(fontWeight: FontWeight.bold))),
+        const DataColumn(
+            label: Text('Display Image',
+                style: TextStyle(fontWeight: FontWeight.bold))),
+        ...formFields.map((field) => DataColumn(
+              label: Text(field.label,
+                  style: const TextStyle(fontWeight: FontWeight.bold)),
+            )),
+        const DataColumn(
+            label:
+                Text('Actions', style: TextStyle(fontWeight: FontWeight.bold))),
+      ],
+      source: _FormDataSource(
+        formDataList: formDataList,
+        formFields: formFields,
+        onEditEntry: onEditEntry,
+        onDeleteEntry: onDeleteEntry,
       ),
     );
   }
@@ -210,4 +244,84 @@ class FormDataRow extends DataRow {
 
     return cells;
   }
+}
+
+class _FormDataSource extends DataTableSource {
+  final List<Map<String, dynamic>> formDataList;
+  final List<FormFieldConfig> formFields;
+  final void Function(int) onEditEntry;
+  final void Function(int) onDeleteEntry;
+
+  _FormDataSource({
+    required this.formDataList,
+    required this.formFields,
+    required this.onEditEntry,
+    required this.onDeleteEntry,
+  });
+
+  @override
+  DataRow? getRow(int index) {
+    if (index >= formDataList.length) return null;
+
+    final data = formDataList[index];
+    final formData = data['formData'] as Map<String, String>;
+    final pickedFile = data['image'] as PickedFileResponse?;
+
+    final cells = <DataCell>[
+      DataCell(Text('${index + 1}')),
+      DataCell(
+        pickedFile?.file != null && pickedFile!.file.existsSync()
+            ? SizedBox(
+                width: 50,
+                height: 50,
+                child: Image.file(
+                  pickedFile.file,
+                  width: 50,
+                  height: 50,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) =>
+                      const Text('Error'),
+                ),
+              )
+            : const Text('No image'),
+      ),
+    ];
+
+    // Add dynamic cells for form fields
+    for (final field in formFields) {
+      cells.add(DataCell(Text(formData[field.label] ?? '')));
+    }
+
+    // Add actions cell
+    cells.add(
+      DataCell(
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IconButton(
+              onPressed: () => onEditEntry(index),
+              icon: const Icon(Icons.edit, color: Colors.blue),
+              iconSize: 20,
+            ),
+            IconButton(
+              onPressed: () => onDeleteEntry(index),
+              icon: const Icon(Icons.delete, color: Colors.red),
+              iconSize: 20,
+            ),
+          ],
+        ),
+      ),
+    );
+
+    return DataRow(cells: cells);
+  }
+
+  @override
+  bool get isRowCountApproximate => false;
+
+  @override
+  int get rowCount => formDataList.length;
+
+  @override
+  int get selectedRowCount => 0;
 }

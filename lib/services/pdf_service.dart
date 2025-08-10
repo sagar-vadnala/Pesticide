@@ -41,7 +41,8 @@ class PdfService {
     await _loadCustomFont();
 
     final pdf = pw.Document();
-    const rowsPerPage = 5;
+    // Adjust rows per page based on dataset size
+    final rowsPerPage = formDataList.length > 100 ? 8 : 5;
     final totalPages = (formDataList.length / rowsPerPage).ceil();
 
     // Validate totalPages to avoid division by zero
@@ -75,6 +76,8 @@ class PdfService {
               );
             } catch (e) {
               print('Error loading image at index $i: $e');
+              // Set placeholder for failed images
+              item['image'] = null;
             }
           }
         }
@@ -89,6 +92,7 @@ class PdfService {
         }
       }
 
+      // Process this page
       pdf.addPage(
         pw.Page(
           pageFormat: PdfPageFormat.a4,
@@ -137,6 +141,15 @@ class PdfService {
           },
         ),
       );
+
+      // Clear page items from memory to free up space
+      pageItems.clear();
+
+      // Force garbage collection for large datasets
+      if (formDataList.length > 100 && pageIndex % 5 == 0) {
+        // Small delay to allow garbage collection
+        await Future.delayed(const Duration(milliseconds: 10));
+      }
     }
 
     final directory = await getTemporaryDirectory();

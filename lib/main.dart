@@ -22,11 +22,11 @@ Future<void> main() async {
     DeviceOrientation.landscapeRight,
   ]);
 
-  // Set image cache size limits to prevent memory issues
+  // Set image cache size limits to prevent memory issues with large datasets
   PaintingBinding.instance.imageCache.maximumSize =
-      100; // Reduce from default 1000
+      50; // Further reduce for 200+ entries
   PaintingBinding.instance.imageCache.maximumSizeBytes =
-      50 * megabyte; // Set reasonable limit
+      30 * megabyte; // More conservative limit for large datasets
 
   runApp(const MyApp());
 }
