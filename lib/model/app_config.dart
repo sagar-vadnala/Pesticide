@@ -16,8 +16,8 @@ class AppConfig {
 
   factory AppConfig.fromJson(Map<String, dynamic> json) {
     return AppConfig(
-      title: json['title'] ?? 'INDIAN PEST CARE SERVICES',
-      subtitle: json['subtitle'] ?? 'Pest Control Report',
+      title: json['title'] ?? 'Report Title',
+      subtitle: json['subtitle'] ?? 'Report Subtitle',
     );
   }
 

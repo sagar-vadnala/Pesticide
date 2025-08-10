@@ -17,8 +17,8 @@ class _FormConfigScreenState extends State<FormConfigScreen> {
   late TextEditingController titleController;
   late TextEditingController subtitleController;
   AppConfig appConfig = AppConfig(
-    title: 'INDIAN PEST CARE SERVICES',
-    subtitle: 'Pest Control Report',
+    title: 'Report Title',
+    subtitle: 'Report Subtitle',
   );
 
   @override
@@ -143,33 +143,26 @@ class _FormConfigScreenState extends State<FormConfigScreen> {
             children: [
               // App Configuration Section
               Container(
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: Colors.deepPurple.withOpacity(0.1),
+                  color: Colors.grey,
                   borderRadius: BorderRadius.circular(15),
                   border: Border.all(color: Colors.deepPurple.withOpacity(0.3)),
                 ),
                 child: Column(
                   children: [
-                    const Icon(
-                      Icons.settings,
-                      size: 50,
-                      color: Colors.deepPurple,
-                    ),
-                    const SizedBox(height: 10),
-                    Text(
-                      'Configure Your App',
-                      style: const TextStyle(
-                        fontSize: 24,
+                    const Text(
+                      'Add Report title and subtitle',
+                      style: TextStyle(
+                        fontSize: 20,
                         fontWeight: FontWeight.bold,
-                        color: Colors.white,
                       ),
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 10),
                     TextField(
                       controller: titleController,
                       decoration: const InputDecoration(
-                        labelText: 'App Title',
+                        labelText: 'Report Title',
                         hintText: 'Enter your app title',
                         border: OutlineInputBorder(),
                         filled: true,
@@ -180,50 +173,11 @@ class _FormConfigScreenState extends State<FormConfigScreen> {
                     TextField(
                       controller: subtitleController,
                       decoration: const InputDecoration(
-                        labelText: 'App Subtitle',
+                        labelText: 'Report Subtitle',
                         hintText: 'Enter your app subtitle',
                         border: OutlineInputBorder(),
                         filled: true,
                         fillColor: Colors.white,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 20),
-
-              // Form Fields Section
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: Colors.green.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(15),
-                  border: Border.all(color: Colors.green.withOpacity(0.3)),
-                ),
-                child: Column(
-                  children: [
-                    const Icon(
-                      Icons.text_fields,
-                      size: 50,
-                      color: Colors.green,
-                    ),
-                    const SizedBox(height: 10),
-                    Text(
-                      'Configure Your Form Fields',
-                      style: const TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    Text(
-                      'Add and customize the text fields that will appear in your form.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: Colors.grey[300],
                       ),
                     ),
                   ],
@@ -361,17 +315,16 @@ class _FormFieldCardState extends State<FormFieldCard> {
   Widget build(BuildContext context) {
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
-      color: Colors.white.withOpacity(0.1),
+      color: Colors.grey,
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(8),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
-                Icon(
+                const Icon(
                   Icons.text_fields,
-                  color: Colors.deepPurple,
                 ),
                 const SizedBox(width: 8),
                 Text(
@@ -379,8 +332,21 @@ class _FormFieldCardState extends State<FormFieldCard> {
                   style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: Colors.white,
                   ),
+                ),
+                Row(
+                  children: [
+                    Checkbox(
+                      value: isRequired,
+                      onChanged: (value) {
+                        setState(() {
+                          isRequired = value ?? true;
+                        });
+                        _updateField();
+                      },
+                    ),
+                    const Text('Required Field'),
+                  ],
                 ),
                 const Spacer(),
                 IconButton(
@@ -389,33 +355,15 @@ class _FormFieldCardState extends State<FormFieldCard> {
                 ),
               ],
             ),
-            const SizedBox(height: 16),
             TextField(
               controller: labelController,
               onChanged: (_) => _updateField(),
               decoration: const InputDecoration(
-                labelText: 'Field Label',
+                labelText: 'Column Label',
                 border: OutlineInputBorder(),
                 filled: true,
                 fillColor: Colors.white,
               ),
-            ),
-            Row(
-              children: [
-                Checkbox(
-                  value: isRequired,
-                  onChanged: (value) {
-                    setState(() {
-                      isRequired = value ?? true;
-                    });
-                    _updateField();
-                  },
-                ),
-                const Text(
-                  'Required Field',
-                  style: TextStyle(color: Colors.white),
-                ),
-              ],
             ),
           ],
         ),

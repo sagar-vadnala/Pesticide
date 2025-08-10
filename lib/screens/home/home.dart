@@ -29,8 +29,8 @@ class _HomeScreenState extends State<HomeScreen> {
   double pdfProgress = 0.0;
   List<FormFieldConfig> formFields = [];
   AppConfig appConfig = AppConfig(
-    title: 'INDIAN PEST CARE SERVICES',
-    subtitle: 'Pest Control Report',
+    title: 'Report Title',
+    subtitle: 'Report Subtitle',
   );
 
   @override
