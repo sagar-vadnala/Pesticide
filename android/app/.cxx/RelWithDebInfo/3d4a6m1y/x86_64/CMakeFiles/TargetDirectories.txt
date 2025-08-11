@@ -1,0 +1,2 @@
+/Users/user/Desktop/Flutter/Pesticide/android/app/.cxx/RelWithDebInfo/3d4a6m1y/x86_64/CMakeFiles/edit_cache.dir
+/Users/user/Desktop/Flutter/Pesticide/android/app/.cxx/RelWithDebInfo/3d4a6m1y/x86_64/CMakeFiles/rebuild_cache.dir
