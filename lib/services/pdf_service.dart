@@ -60,6 +60,7 @@ class PdfService {
 
       for (int i = start; i < end; i++) {
         final item = Map<String, dynamic>.from(formDataList[i]);
+        print('DEBUG: Processing item $i: $item');
 
         if (item['image'] != null) {
           final pickedFile = item['image'] as PickedFileResponse;
@@ -91,6 +92,9 @@ class PdfService {
           onProgressUpdate(progress.clamp(0.0, 1.0));
         }
       }
+
+      // Create a copy of pageItems to avoid clearing before PDF is built
+      final pageItemsCopy = List<Map<String, dynamic>>.from(pageItems);
 
       // Process this page
       pdf.addPage(
@@ -132,8 +136,9 @@ class PdfService {
                       ),
                       children: _buildHeaderRow(formFields),
                     ),
-                    for (int i = 0; i < pageItems.length; i++)
-                      _buildTableRow(pageItems[i], formFields, start + i + 1),
+                    for (int i = 0; i < pageItemsCopy.length; i++)
+                      _buildTableRow(
+                          pageItemsCopy[i], formFields, start + i + 1),
                   ],
                 ),
               ],
@@ -142,7 +147,7 @@ class PdfService {
         ),
       );
 
-      // Clear page items from memory to free up space
+      // Clear page items from memory to free up space after building
       pageItems.clear();
 
       // Force garbage collection for large datasets
@@ -253,8 +258,14 @@ class PdfService {
       String cellContent = '';
       try {
         final formData = item['formData'];
+        print('DEBUG: Processing field ${field.label}');
+        print('DEBUG: FormData: $formData');
+
         if (formData != null && formData[field.label] != null) {
           cellContent = formData[field.label].toString();
+          print('DEBUG: Cell content: $cellContent');
+        } else {
+          print('DEBUG: No data found for field ${field.label}');
         }
       } catch (e) {
         print('Error getting form data for field ${field.label}: $e');
