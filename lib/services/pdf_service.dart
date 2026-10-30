@@ -60,7 +60,6 @@ class PdfService {
 
       for (int i = start; i < end; i++) {
         final item = Map<String, dynamic>.from(formDataList[i]);
-        print('DEBUG: Processing item $i: $item');
 
         if (item['image'] != null) {
           final pickedFile = item['image'] as PickedFileResponse;
@@ -100,46 +99,73 @@ class PdfService {
       pdf.addPage(
         pw.Page(
           pageFormat: PdfPageFormat.a4,
-          margin: const pw.EdgeInsets.all(20),
+          margin: const pw.EdgeInsets.all(15),
           build: (pw.Context context) {
             return pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.stretch,
               children: [
-                pw.Text(
-                  appConfig.title,
-                  style: pw.TextStyle(
-                    fontSize: 24,
-                    fontWeight: pw.FontWeight.bold,
-                    font: _customFont,
-                  ),
-                ),
-                pw.SizedBox(height: 8),
-                pw.Text(
-                  appConfig.subtitle,
-                  style: pw.TextStyle(
-                    fontSize: 16,
-                    font: _customFont,
-                  ),
-                ),
-                pw.SizedBox(height: 20),
-                pw.Table(
-                  border: pw.TableBorder.all(
-                    width: 1.0,
-                    color: PdfColors.black,
-                  ),
-                  columnWidths: _buildColumnWidths(formFields),
-                  defaultVerticalAlignment:
-                      pw.TableCellVerticalAlignment.middle,
-                  children: [
-                    pw.TableRow(
-                      decoration: const pw.BoxDecoration(
-                        color: PdfColors.grey200,
+                // Header section
+                pw.Container(
+                  alignment: pw.Alignment.center,
+                  padding: const pw.EdgeInsets.only(bottom: 15),
+                  child: pw.Column(
+                    children: [
+                      pw.Text(
+                        appConfig.title,
+                        style: pw.TextStyle(
+                          fontSize: 22,
+                          fontWeight: pw.FontWeight.bold,
+                          font: _customFont,
+                        ),
                       ),
-                      children: _buildHeaderRow(formFields),
+                      pw.SizedBox(height: 5),
+                      pw.Text(
+                        appConfig.subtitle,
+                        style: pw.TextStyle(
+                          fontSize: 14,
+                          font: _customFont,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Table takes up remaining space
+                pw.Expanded(
+                  child: pw.Table(
+                    border: pw.TableBorder.all(
+                      width: 1.0,
+                      color: PdfColors.black,
                     ),
-                    for (int i = 0; i < pageItemsCopy.length; i++)
-                      _buildTableRow(
-                          pageItemsCopy[i], formFields, start + i + 1),
-                  ],
+                    columnWidths: _buildColumnWidths(formFields),
+                    defaultVerticalAlignment:
+                        pw.TableCellVerticalAlignment.middle,
+                    children: [
+                      pw.TableRow(
+                        decoration: const pw.BoxDecoration(
+                          color: PdfColors.grey200,
+                        ),
+                        children: _buildHeaderRow(formFields),
+                      ),
+                      for (int i = 0; i < pageItemsCopy.length; i++)
+                        _buildTableRow(
+                            pageItemsCopy[i], formFields, start + i + 1),
+                    ],
+                  ),
+                ),
+
+                // Footer with page info
+                pw.Container(
+                  alignment: pw.Alignment.centerRight,
+                  padding: const pw.EdgeInsets.only(top: 10),
+                  child: pw.Text(
+                    'Page ${pageIndex + 1} of $totalPages',
+                    style: pw.TextStyle(
+                      fontSize: 10,
+                      font: _customFont,
+                      color: PdfColors.grey600,
+                    ),
+                  ),
                 ),
               ],
             );
@@ -239,11 +265,14 @@ class PdfService {
   ) {
     final cells = <pw.Widget>[
       pw.Container(
+        height: 120.0, // Match image cell height
         padding: const pw.EdgeInsets.all(8.0),
+        alignment: pw.Alignment.center,
         child: pw.Text(
           '$index',
           style: pw.TextStyle(
-            fontSize: 10,
+            fontSize: 12,
+            fontWeight: pw.FontWeight.bold,
             font: _customFont,
           ),
           textAlign: pw.TextAlign.center,
@@ -258,14 +287,9 @@ class PdfService {
       String cellContent = '';
       try {
         final formData = item['formData'];
-        print('DEBUG: Processing field ${field.label}');
-        print('DEBUG: FormData: $formData');
 
         if (formData != null && formData[field.label] != null) {
           cellContent = formData[field.label].toString();
-          print('DEBUG: Cell content: $cellContent');
-        } else {
-          print('DEBUG: No data found for field ${field.label}');
         }
       } catch (e) {
         print('Error getting form data for field ${field.label}: $e');
@@ -274,14 +298,18 @@ class PdfService {
 
       cells.add(
         pw.Container(
+          height: 120.0, // Match image cell height
           padding: const pw.EdgeInsets.all(8.0),
+          alignment: pw.Alignment.centerLeft,
           child: pw.Text(
             cellContent,
             style: pw.TextStyle(
-              fontSize: 10,
+              fontSize: 11,
               font: _customFont,
             ),
             textAlign: pw.TextAlign.left,
+            maxLines: 6, // Allow multiple lines for longer content
+            overflow: pw.TextOverflow.clip,
           ),
         ),
       );
@@ -291,7 +319,7 @@ class PdfService {
   }
 
   static pw.Widget _buildImageCell(PickedFileResponse? image) {
-    const double cellHeight = 80.0;
+    const double cellHeight = 120.0; // Increased height for better utilization
 
     if (image != null && image.bytes.isNotEmpty) {
       try {
@@ -303,7 +331,7 @@ class PdfService {
         // Use fixed minimal padding to avoid any calculation issues
         return pw.Container(
           height: cellHeight,
-          padding: const pw.EdgeInsets.all(2.0),
+          padding: const pw.EdgeInsets.all(3.0),
           child: pw.Center(
             child: pw.Image(
               pw.MemoryImage(image.bytes),
@@ -320,7 +348,7 @@ class PdfService {
             child: pw.Text(
               'Image Error',
               style: pw.TextStyle(
-                fontSize: 8,
+                fontSize: 10,
                 font: _customFont,
               ),
               textAlign: pw.TextAlign.center,
@@ -336,7 +364,7 @@ class PdfService {
           child: pw.Text(
             'No Image',
             style: pw.TextStyle(
-              fontSize: 8,
+              fontSize: 10,
               font: _customFont,
             ),
             textAlign: pw.TextAlign.center,
